@@ -36,6 +36,18 @@ HEADS.late_add(_head_late_add)
 Head = HEADS.add
 
 
+BBOXERS = Registry("bboxer")
+
+
+def _bboxer_late_add(r: Registry):
+    from . import bboxer as m
+    r.add_from_module(m)
+
+
+BBOXERS.late_add(_bboxer_late_add)
+BBoxer = BBOXERS.add
+
+
 DETECTORS = Registry("detector")
 
 

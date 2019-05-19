@@ -1,4 +1,6 @@
-import numpy as np
+from typing import Tuple
+
+import torch
 import torch.nn as nn
 
 from .core import HeadSpec
@@ -9,24 +11,11 @@ class RetinaHead(HeadSpec):
 
     def __init__(
         self,
-        num_classes,
-        in_channels,
         stacked_convs=4,
-        octave_base_scale=4,
-        scales_per_octave=3,
         **kwargs
     ):
         self.stacked_convs = stacked_convs
-        self.octave_base_scale = octave_base_scale
-        self.scales_per_octave = scales_per_octave
-        octave_scales = np.array(
-            [2 ** (i / scales_per_octave) for i in range(scales_per_octave)])
-        anchor_scales = octave_scales * octave_base_scale
-        super(RetinaHead, self).__init__(
-            num_classes=num_classes,
-            in_channels=in_channels,
-            anchor_scales=anchor_scales,
-            **kwargs)
+        super(RetinaHead, self).__init__(**kwargs)
 
     def _init_layers(self):
         self.relu = nn.ReLU(inplace=True)
@@ -50,11 +39,13 @@ class RetinaHead(HeadSpec):
                     padding=1))
         self.retina_cls = nn.Conv2d(
             self.feat_channels,
-            self.num_anchors * self.cls_out_channels,
+            self.num_anchors * self.num_classes,
             3,
             padding=1)
         self.retina_reg = nn.Conv2d(
-            self.feat_channels, self.num_anchors * 4, 3, padding=1)
+            self.feat_channels, self.num_anchors * 4,
+            3,
+            padding=1)
 
     def _init_weights(self):
         for m in self.cls_convs:
@@ -65,7 +56,10 @@ class RetinaHead(HeadSpec):
         normal_init(self.retina_cls, std=0.01, bias=bias_cls)
         normal_init(self.retina_reg, std=0.01)
 
-    def forward_single(self, single_level_features):
+    def forward_single(
+        self,
+        single_level_features: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         cls_feat = single_level_features
         reg_feat = single_level_features
         for cls_conv in self.cls_convs:

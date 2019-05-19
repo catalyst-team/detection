@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 
 from utils.initialization import normal_init
+from utils.misc import multi_apply
 
 
 class HeadSpec(ABC, nn.Module):
@@ -13,24 +14,15 @@ class HeadSpec(ABC, nn.Module):
         self,
         num_classes,
         in_channels,
+        num_anchors,
         feat_channels=256,
-        anchor_scales=[8, 16, 32],
-        anchor_ratios=[0.5, 1.0, 2.0],
-        anchor_strides=[4, 8, 16, 32, 64],
-        anchor_base_sizes=None,
     ):
         super().__init__()
 
         self.in_channels = in_channels
         self.num_classes = num_classes
         self.feat_channels = feat_channels
-        self.anchor_scales = anchor_scales
-        self.anchor_ratios = anchor_ratios
-        self.anchor_strides = anchor_strides
-        self.anchor_base_sizes = list(anchor_strides) \
-            if anchor_base_sizes is None \
-            else anchor_base_sizes
-        self.num_anchors = len(self.anchor_ratios) * len(self.anchor_scales)
+        self.num_anchors = num_anchors
 
         self._init_layers()
         self._init_weights()
@@ -53,12 +45,11 @@ class HeadSpec(ABC, nn.Module):
         bbox_pred = self.conv_reg(single_level_features)
         return cls_score, bbox_pred
 
-    @abstractmethod
     def forward(
         self,
         multi_level_features: List[torch.Tensor]
-    ) -> List[Tuple[torch.Tensor, torch.Tensor]]:
-        output = list(map(self.forward_single, multi_level_features))
+    ) -> Tuple[List[torch.Tensor], List[torch.Tensor]]:
+        output = multi_apply(self.forward_single, multi_level_features)
         return output
 
     def set_requires_grad(self, requires_grad):
