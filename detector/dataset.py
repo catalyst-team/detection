@@ -5,6 +5,7 @@ import math
 import torch
 from torch.utils.data import Dataset
 import numpy as np
+import copy
 
 import albumentations as A
 from .transforms import pre_transform, augmentations, BBOX_PARAMS
@@ -163,7 +164,18 @@ class DetectionDataset(Dataset):
         detections = annotation['detections']
 
         image = utils.imread(image_name)
-        #image = cv2.resize(image, (self.image_size, self.image_size), cv2.INTER_LINEAR)
+        x_scale, y_scale = self.image_size / image.shape[1], self.image_size / image.shape[0]
+
+        image = cv2.resize(image, (self.image_size, self.image_size), cv2.INTER_LINEAR)
+
+        detections = [{
+            'category_id': detection['category_id'],
+            'category_name': detection['category_name'],
+            'bbox': detection['bbox'].copy()
+            } for detection in detections]
+        for detection in detections:
+            detection['bbox'][0::2] *= x_scale
+            detection['bbox'][1::2] *= y_scale
 
         bboxes = np.array([detection['bbox'] for detection in detections])
         labels = np.array([detection['category_id'] for detection in detections])
@@ -187,28 +199,13 @@ class DetectionDataset(Dataset):
 
         input_height, input_width = image.shape[0], image.shape[1]
 
-
-        center = np.array(
-            [input_width / 2.0, input_height / 2.0],
-            dtype=np.float32
-            )
-        scale = np.array([input_width, input_height], dtype=np.float32)
-        # recenter and rescale image
-        trans_input = get_affine_transform(center, scale, 0, [input_width, input_height])
-        input = cv2.warpAffine(
-            image,
-            trans_input,
-            (input_width, input_height),
-            flags=cv2.INTER_LINEAR
-            )
-
         # Normalization
         input = (image.astype(np.float32) / 255.) * 2. - 1.
         input = input.transpose(2, 0, 1)
 
         output_height = input_height // self._down_ratio
         output_width = input_width // self._down_ratio
-        trans_output = get_affine_transform(center, scale, 0, [output_width, output_height])
+        #trans_output = get_affine_transform(center, scale, 0, [output_width, output_height])
 
         heatmap = np.zeros((self._num_categories, output_height, output_width), dtype=np.float32)
         width_height = np.zeros((self._max_objects, 2), dtype=np.float32)
@@ -222,10 +219,9 @@ class DetectionDataset(Dataset):
         new_bboxes = []
         num_objs = min(len(bboxes), self._max_objects)
         for i in range(num_objs):
-            bbox = np.array(bboxes[i], dtype=np.float32)
+            bbox = np.array(bboxes[i], dtype=np.float32) / self._down_ratio
             class_id = labels[i]
-            bbox[:2] = affine_transform(bbox[:2], trans_output)
-            bbox[2:] = affine_transform(bbox[2:], trans_output)
+
             bbox[[0, 2]] = np.clip(bbox[[0, 2]], 0, output_width - 1)
             bbox[[1, 3]] = np.clip(bbox[[1, 3]], 0, output_height - 1)
             h, w = bbox[3] - bbox[1], bbox[2] - bbox[0]
@@ -248,134 +244,13 @@ class DetectionDataset(Dataset):
         result = {
             "filename": image_name,
             "input":    torch.from_numpy(input),
-            "hm":       heatmap,
-            "reg_mask": reg_mask,
-            "ind":      ind,
-            "wh":       width_height,
-            "reg":      reg,
+            "hm":       torch.from_numpy(heatmap),
+            "reg_mask": torch.from_numpy(reg_mask),
+            "ind":      torch.from_numpy(ind),
+            "wh":       torch.from_numpy(width_height),
+            "reg":      torch.from_numpy(reg),
             "bboxes":   torch.from_numpy(np.array(new_bboxes)),
             "labels":   torch.from_numpy(np.array(labels)),
         }
 
         return result
-
-'''
-class DetectionDataset(Dataset):
-    def __init__(
-        self,
-        num_classes: int,
-        down_ratio: float,
-        max_objs: int,
-        filepaths: List[str],
-        bboxes,
-        labels,
-        image_size,
-        transform=None,
-    ):
-        super(DetectionDataset, self).__init__()
-        self.num_classes = num_classes
-        self.down_ratio = down_ratio
-        self.max_objs = max_objs
-        self.filepaths, self.bboxes, self.labels = filepaths, bboxes, labels
-
-        assert image_size[0] == image_size[1], "Only square image are now supported"
-
-        self.image_size = image_size[0]
-        self.transform = transform
-
-    def __len__(self):
-        return len(self.filepaths)
-
-    def __getitem__(self, idx):
-        filename = self.filepaths[idx]
-        image = utils.imread(filename)
-        
-        if self.transform is not None:
-            result = self.transform(
-                image=image,
-                bboxes=self.bboxes[idx],
-                labels=self.labels[idx],
-            )
-        else:
-            result = dict(
-                image=image,
-                bboxes=self.bboxes[idx],
-                labels=self.labels[idx],
-            )
-
-        image = result["image"].astype(np.uint8)
-        bboxes = result["bboxes"]
-        labels = result["labels"]
-
-        input_height, input_width = image.shape[0], image.shape[1]
-        center = np.array(
-            [input_width / 2.0, input_height / 2.0],
-            dtype=np.float32
-        )
-        scale = np.array([input_width, input_height], dtype=np.float32)
-
-        # recenter and rescale image
-        trans_input = get_affine_transform(center, scale, 0, [input_width, input_height])
-        input = cv2.warpAffine(
-            image,
-            trans_input,
-            (input_width, input_height),
-            flags=cv2.INTER_LINEAR
-        )
-        # Normalization
-        input = (input.astype(np.float32) / 255.) * 2. - 1.
-        input = input.transpose(2, 0, 1)
-
-        output_height = input_height // self.down_ratio
-        output_width = input_width // self.down_ratio
-        trans_output = get_affine_transform(center, scale, 0, [output_width, output_height])
-
-        heatmap = np.zeros((self.num_classes, output_height, output_width), dtype=np.float32)
-        weight_height = np.zeros((self.max_objs, 2), dtype=np.float32)
-        reg = np.zeros((self.max_objs, 2), dtype=np.float32)
-        ind = np.zeros(self.max_objs, dtype=np.int64)
-        reg_mask = np.zeros(self.max_objs, dtype=np.uint8)
-
-        draw_gaussian = draw_umich_gaussian
-
-        new_bboxes = []
-        num_objs = min(len(self.bboxes[idx]), self.max_objs)
-        for i in range(num_objs):
-            bbox = np.array(bboxes[i], dtype=np.float32)
-            class_id = labels[i]
-            bbox[:2] = affine_transform(bbox[:2], trans_output)
-            bbox[2:] = affine_transform(bbox[2:], trans_output)
-            bbox[[0, 2]] = np.clip(bbox[[0, 2]], 0, output_width - 1)
-            bbox[[1, 3]] = np.clip(bbox[[1, 3]], 0, output_height - 1)
-            h, w = bbox[3] - bbox[1], bbox[2] - bbox[0]
-            new_bboxes.append(bbox)
-
-            if h > 0 and w > 0:
-                radius = gaussian_radius((math.ceil(h), math.ceil(w)))
-                radius = max(0, int(radius))
-                _center = np.array(
-                    [(bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2],
-                    dtype=np.float32
-                )
-                _center_int = _center.astype(np.int32)
-                draw_gaussian(heatmap[class_id], _center_int, radius)
-                weight_height[i] = 1. * w, 1. * h
-                ind[i] = _center_int[1] * output_width + _center_int[0]
-                reg[i] = _center - _center_int
-                reg_mask[i] = 1
-
-        #_res_ages = (np.array(res_ages, dtype=np.float32) / 100.0).clip(0.0, 1.0)
-        result = {
-            "filename": filename,
-            "input": torch.from_numpy(input),
-            "hm": heatmap,
-            "reg_mask": reg_mask,
-            "ind": ind,
-            "wh": weight_height,
-            "reg": reg,
-            "bboxes": torch.from_numpy(np.array(new_bboxes)),
-            "labels": torch.from_numpy(np.array(labels)),
-        }
-
-        return result
-'''

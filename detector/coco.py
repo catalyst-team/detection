@@ -24,7 +24,7 @@ class DetectionMSCOCODataset(Dataset):
 
         self._data = "coco"
         self._classes = {
-            ind + 1: cat_id for ind, cat_id in enumerate(self._cat_ids)
+            ind: cat_id for ind, cat_id in enumerate(self._cat_ids)
         }
         self._coco_to_class_map = {
             value: key for key, value in self._classes.items()
