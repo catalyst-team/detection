@@ -11,7 +11,6 @@ BBOX_PARAMS = dict(
     label_fields=["labels"],
 )
 
-
 def pre_transform(image_size: int = 512):
     result = [
         A.LongestMaxSize(image_size),
