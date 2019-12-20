@@ -2,12 +2,11 @@ import os
 import json
 import numpy as np
 import pickle
-from typing import Dict, Any
+from typing import Any
 
 from pycocotools.coco import COCO
 from torch.utils.data import Dataset
 
-from pprint import pprint as print
 
 class DetectionMSCOCODataset(Dataset):
     def __init__(self, annotation_file: str, image_dir: str):
