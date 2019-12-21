@@ -120,7 +120,7 @@ class COCODetectionFactory:
         return self
 
     def add_licence(self,
-                    licence_id: Optional[int],
+                    licence_id: Optional[int] = None,
                     name: str = "",
                     url: str = "") -> Any:
         """
@@ -144,8 +144,8 @@ class COCODetectionFactory:
         return licence_id
 
     def add_category(self,
-                     category_id: Optional[int],
-                     name: str,
+                     category_id: Optional[int] = None,
+                     name: str = "",
                      supercategory: str = ""):
         """
         Adds category to detaset
@@ -161,7 +161,7 @@ class COCODetectionFactory:
 
         if name in self._image_names_to_idx:
             raise RuntimeError('Category names must be unique, but \"{}\" already exists'.format(name))
-        self._image_names_to_idx[name] = category_id
+        self._category_names_to_idx[name] = category_id
 
         self._output['categories'].append({
             'id': category_id,
@@ -171,8 +171,8 @@ class COCODetectionFactory:
         return category_id
 
     def add_image(self,
-                  image_id: Optional[int],
-                  file_name: str,
+                  image_id: Optional[int] = None,
+                  file_name: str = "",
                   height: Optional[int] = None,
                   width: Optional[int] = None) -> Any:
         """
@@ -203,10 +203,10 @@ class COCODetectionFactory:
         return image_id
     
     def add_bbox(self,
-                 bbox_left: int,
-                 bbox_top: int,
-                 bbox_width: int,
-                 bbox_height: int,
+                 bbox_left: int = 0,
+                 bbox_top: int = 0,
+                 bbox_width: int = 0,
+                 bbox_height: int = 0,
                  image_id: Optional[int] = None,
                  image_file_name: Optional[str] = None,
                  category_id: Optional[int] = None,
@@ -243,7 +243,7 @@ class COCODetectionFactory:
             raise RuntimeError("One of category_id and category_name must be specified")
 
         if category_id is None:
-            if category_name in self._image_names_to_idx:
+            if category_name in self._category_names_to_idx:
                 category_id = self._category_names_to_idx[category_name]
             else:
                 raise RuntimeError("Unknown category name \"{}\"".format(category_name))
