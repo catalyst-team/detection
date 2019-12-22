@@ -35,13 +35,11 @@ class CenterNet(nn.Module):
             value = value[self.backbone_key]
 
         features = torch.relu_(value)
-
         value = {
             "hm": self.head_heatmap(features),
             "wh": self.head_width_height(features),
             "reg": self.head_offset_regularizer(features),
         }
-
         return value
 
     def predict(self, x: torch.Tensor):

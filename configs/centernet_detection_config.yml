@@ -2,18 +2,17 @@ shared:
   classes: &classes ["person"]
   num_classes: &num_classes 1
 
-  image_size: &image_size [512, 512]
-  down_ratio: &down_ratio 4 # == (height of input image / height of predicted heatmap)
+  image_size: &image_size [224, 224]
+  down_ratio: &down_ratio 1 #4 # == (height of input image / height of predicted heatmap)
   max_objs: &max_objs 15 # max objects detected per image, passed to DetectorCallback
 
   num_epochs: &num_epochs 200
-  lr: &lr 0.0003
+  lr: &lr 0.001
   weight_decay: &wd 0.0001
 
   hm_weight: &hm_weight 1.0
   wh_weight: &wh_weight 0.1
   off_weight: &off_weight 1.0
-
 
 model_params:
  model: ResnetCenterNet
@@ -24,8 +23,12 @@ model_params:
    arch: resnet18
    pretrained: true
 
+runner_params:
+  input_key: "input"
+  output_key: null
+
 args:
-  expdir: detector
+  expdir: src
   logdir: logs
 
 stages:
@@ -35,21 +38,28 @@ stages:
 
   data_params:
     num_workers: 8
-    batch_size: 15
-
-    classes: *classes
-    image_size: *image_size
-    dataset_root: /data
-    image_folders: "path"
-    n_jobs: 1
-    sampler_params:
-      mini_epoch_len: 40000
-      drop_last: true
-      shuffle: per_epoch
-    train_samples: "train-detections.json"
-    valid_samples: "valid-detections.json"
-    down_ratio: *down_ratio
+    batch_size: 5
     max_objs: *max_objs
+    down_ratio: *down_ratio
+
+    annotation_file: ./data/annotation.json
+    images_dir: ./data/images/
+    num_categories: *num_classes
+    image_size: *image_size
+
+    #classes: *classes
+    #image_size: *image_size
+    #dataset_root: /data
+    #image_folders: "path"
+    #n_jobs: 1
+    #sampler_params:
+    #  mini_epoch_len: 40000
+    #  drop_last: true
+    #  shuffle: per_epoch
+    #train_samples: "train-detections.json"
+    #valid_samples: "valid-detections.json"
+    #down_ratio: *down_ratio
+    #max_objs: *max_objs
 
   criterion_params:
     _key_value: True
@@ -63,10 +73,10 @@ stages:
       criterion: RegL1Loss
       key: reg
 
-  # scheduler_params:
-  #   scheduler: MultiStepLR
-  #   milestones: [12, 40]
-  #   gamma: 0.8
+  scheduler_params:
+     scheduler: MultiStepLR
+     milestones: [12, 40]
+     gamma: 0.8
 
   stage1:
     state_params:
@@ -106,8 +116,7 @@ stages:
       loss_aggregator:
         callback: CriterionAggregatorCallback
         prefix: &aggregated_loss loss
-        loss_keys: [
-          "loss_hm", "loss_wh", "loss_reg"]
+        loss_keys: ["loss_hm", "loss_wh", "loss_reg"]
         loss_aggregate_fn: "sum" # "sum" or "mean"
         multiplier: 1.0 # scale factor for the aggregated loss
 
@@ -118,18 +127,21 @@ stages:
           clip_value: 5.0
         loss_key: *aggregated_loss
 
-      # scheduler:
-      #   callback: SchedulerCallback
-      #   reduce_metric: *main_metric
+      scheduler:
+        callback: SchedulerCallback
+        reduce_metric: *main_metric
 
-      decoder:
-        callback: DecoderCallback
-        down_ratio: *down_ratio
-        max_objs: *max_objs
-      mAP:
-        callback: MeanAPCallback
-        classes: *classes
+      #debugger:
+      #  callback: MyDebugCallback
 
-      saver:
-        callback: CheckpointCallback
-        save_n_best: 3
+    #  decoder:
+    #    callback: DecoderCallback
+    #    down_ratio: *down_ratio
+    #    max_objs: *max_objs
+    #  mAP:
+    #    callback: MeanAPCallback
+    #    classes: *classes
+
+    #  saver:
+    #    callback: CheckpointCallback
+    #    save_n_best: 3

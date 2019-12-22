@@ -55,11 +55,11 @@ def get_affine_transform(
 
 
 def affine_transform(point: np.array, transform_matrix: np.array) -> np.array:
-    '''
+    """
     :param point: np.ndarray with shape (2, )
     :param transform_matrix:
     :return:
-    '''
+    """
     new_pt = np.array([point[0], point[1], 1.], dtype=np.float32).T
     new_pt = np.dot(transform_matrix, new_pt)
     return new_pt[:2]
@@ -205,7 +205,7 @@ class DetectionDataset(Dataset):
 
         output_height = input_height // self._down_ratio
         output_width = input_width // self._down_ratio
-        #trans_output = get_affine_transform(center, scale, 0, [output_width, output_height])
+        # trans_output = get_affine_transform(center, scale, 0, [output_width, output_height])
 
         heatmap = np.zeros((self._num_categories, output_height, output_width), dtype=np.float32)
         width_height = np.zeros((self._max_objects, 2), dtype=np.float32)
@@ -249,8 +249,8 @@ class DetectionDataset(Dataset):
             "ind":      torch.from_numpy(ind),
             "wh":       torch.from_numpy(width_height),
             "reg":      torch.from_numpy(reg),
-            "bboxes":   torch.from_numpy(np.array(new_bboxes)),
-            "labels":   torch.from_numpy(np.array(labels)),
+            "bboxes":   np.array(new_bboxes),
+            "labels":   np.array(labels),
         }
 
         return result

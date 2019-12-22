@@ -5,14 +5,13 @@ from catalyst.dl import Callback, RunnerState, CallbackOrder, CriterionCallback
 from .losses.ctdet_loss import decode_centernet_predictions
 from .metrics import class_agnostic_mean_ap, calculate_map, construct_mAP_list_from_bboxes
 
-from catalyst.dl import utils
-
 
 def detach(tensor) -> np.ndarray:
     """
     Detaches the input tensor to a numpy array
     """
     return tensor.detach().cpu().numpy()
+
 
 class DecoderCallback(Callback):
     def __init__(self, down_ratio: int = 1, max_objs: int = 80):
@@ -134,4 +133,16 @@ class MeanAPCallback(Callback):
             self.classes_predictions: Dict[str, List[(bool, float)]] = {c: [] for c in self.classes}
 
 
-__all__ = ["DecoderCallback", "MeanAPCallback"]
+class MyDebugCallback(Callback):
+    def __init__(self):
+        super(MyDebugCallback, self).__init__(CallbackOrder.Metric)
+
+    def on_epoch_start(self, state: RunnerState):
+        print('epoch start')
+
+    def on_loader_end(self, state: RunnerState):
+        print('input:', state.input)
+        print('output:', state.output)
+
+
+__all__ = ["DecoderCallback", "MeanAPCallback", "MyDebugCallback"]

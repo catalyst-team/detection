@@ -6,10 +6,12 @@ class Runner(SupervisedRunner):
         self,
         model=None,
         device=None,
+        input_key=None,
+        output_key=None
     ):
         super().__init__(
             model=model,
             device=device,
-            input_key="input",
-            output_key=None
+            input_key=input_key,
+            output_key=output_key
         )
