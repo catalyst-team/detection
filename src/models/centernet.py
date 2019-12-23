@@ -9,6 +9,7 @@ class CenterNet(nn.Module):
         self,
         num_classes: int,
         model_fn: Callable,
+        down_ratio: int = 1,
         embedding_dim: int = 128,
         model_params: dict = None,
         backbone_key: str = None
@@ -21,11 +22,12 @@ class CenterNet(nn.Module):
         self.backbone = model_fn(**model_params)
         self.backbone_key = backbone_key
 
-        self.head_heatmap = nn.Conv2d(
-            embedding_dim, self.num_classes,
-            kernel_size=(3, 3), padding=1, bias=True
-        )
-        self.head_heatmap.bias.data.fill_(-4.)  # MUST FIX BIAS ELSE START LOSS OVER 9000
+        self.down_sampler = nn.Conv2d(embedding_dim, embedding_dim, kernel_size=(3, 3),
+                                      padding=1, stride=down_ratio, bias=True)
+
+        self.head_heatmap = nn.Conv2d(embedding_dim, self.num_classes, kernel_size=(3, 3),
+                                      padding=1, bias=True)
+        self.head_heatmap.bias.data.fill_(-4.)
         self.head_width_height = nn.Conv2d(embedding_dim, 2, kernel_size=(3, 3), padding=1, bias=True)
         self.head_offset_regularizer = nn.Conv2d(embedding_dim, 2, kernel_size=(3, 3), padding=1, bias=True)
 
@@ -34,7 +36,8 @@ class CenterNet(nn.Module):
         if self.backbone_key is not None:
             value = value[self.backbone_key]
 
-        features = torch.relu_(value)
+        features = torch.relu_(self.down_sampler(torch.relu_(value)))
+
         value = {
             "hm": self.head_heatmap(features),
             "wh": self.head_width_height(features),

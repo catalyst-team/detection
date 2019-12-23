@@ -2,7 +2,7 @@
 from .runner import Runner
 from .experiment import Experiment
 
-from .callbacks import DecoderCallback, MeanAPCallback, CriterionDebugCallback
+from .callbacks import DecoderCallback, MeanAPCallback
 from .losses import CenterNetDetectionLoss, \
     RegL1Loss, MSEIndLoss, BCEIndLoss, FocalIndLoss
 from . import models
@@ -15,7 +15,6 @@ registry.Criterion(MSEIndLoss)
 registry.Criterion(BCEIndLoss)
 registry.Criterion(FocalIndLoss)
 
-registry.Callback(CriterionDebugCallback)
 registry.Callback(DecoderCallback)
 registry.Callback(MeanAPCallback)
 

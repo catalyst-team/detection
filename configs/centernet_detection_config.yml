@@ -3,7 +3,7 @@ shared:
   num_classes: &num_classes 1
 
   image_size: &image_size [224, 224]
-  down_ratio: &down_ratio 1 #4 # == (height of input image / height of predicted heatmap)
+  down_ratio: &down_ratio 4 # (height of input image / height of predicted heatmap)
   max_objs: &max_objs 15 # max objects detected per image, passed to DetectorCallback
 
   num_epochs: &num_epochs 200
@@ -19,6 +19,7 @@ model_params:
  num_classes: *num_classes
  embedding_dim: 128
  arch: "ResnetFPNUnet"
+ down_ratio: *down_ratio
  backbone_params:
    arch: resnet18
    pretrained: true
@@ -37,7 +38,7 @@ stages:
     minimize_metric: &minimize_metric true
 
   data_params:
-    num_workers: 8
+    num_workers: 0
     batch_size: 5
     max_objs: *max_objs
     down_ratio: *down_ratio

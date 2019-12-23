@@ -13,7 +13,6 @@ import torch
 from catalyst.data.collate_fn import FilteringCollateFn
 from catalyst.data.sampler import MiniEpochSampler
 from catalyst.dl import ConfigExperiment
-from tqdm import tqdm
 
 from .dataset import DetectionDataset
 from .transforms import train_transform, valid_transform, infer_transform
@@ -21,93 +20,43 @@ from .transforms import train_transform, valid_transform, infer_transform
 torch.multiprocessing.set_sharing_strategy("file_system")
 
 
-def run_one(data):
-    sample, data_dir, class2label, image_folders = data
-    if sample is None:
-        return None
-
-    filepath = data_dir / sample["name"]
-
-    objs = sample["objs"]
-    bbox = []
-    label = []
-    for i, obj in enumerate(objs):
-        coords = [
-            obj["x_min"],
-            obj["y_min"],
-            obj["x_max"],
-            obj["y_max"]
-        ]
-
-        bbox.append(coords)
-        label.append(int(class2label[obj["class"]]))
-
-    bbox = np.array(bbox)
-
-    return filepath, bbox, label
-
-def _load_data(
-    n_jobs: int,
-    data_dir: Path,
-    samples_path: Path,
-    class2label: Dict[str, int],
-    image_folders
-):
-    filepaths = []
-    bboxes = []
-    labels = []
-
-    samples = safitty.load(samples_path)
-
-    length = len(samples)
-
-    sequence = zip(
-        samples, repeat(data_dir), repeat(class2label), repeat(image_folders)
-    )
-    with Pool(n_jobs) as p:
-        samples_ = list(
-            tqdm(
-                p.imap(run_one, sequence),
-                total=length, desc=f"{samples_path}"
-            )
-        )
-
-    for (f, b, l) in samples_:
-        filepaths.append(f)
-        bboxes.append(b)
-        labels.append(l)
-
-    tqdm.write(f"{samples_path}: {len(filepaths), len(bboxes), len(labels)}")
-    return filepaths, bboxes, labels, ages
-
-
 class Experiment(ConfigExperiment):
-    def _get_logdir(self, config: Dict) -> str:
-        timestamp = datetime.datetime.utcnow().strftime("%y%m%d.%H%M%S.%f")
-        data_params = safitty.get(config, "stages", "data_params")
-        mini_epoch_len = safitty.get(data_params, "sampler_params", "mini_epoch_len", default="none")
+    def get_datasets(
+            self,
+            stage: str,
+            **kwargs,
+    ):
+        train_dataset = DetectionDataset(annotation_file=kwargs['annotation_file'],
+                                         images_dir=kwargs['images_dir'],
+                                         down_ratio=kwargs['down_ratio'],
+                                         max_objects=kwargs['max_objs'],
+                                         num_categories=kwargs['num_categories'],
+                                         image_size=kwargs['image_size'],
+                                         transform=None
+                                         )
 
-        dataset = safitty.get(data_params, "dataset_root", apply=Path).stem
+        # TODO TRAIN IS NOW EQUAL TO VAL
+        valid_dataset = DetectionDataset(annotation_file=kwargs['annotation_file'],
+                                         images_dir=kwargs['images_dir'],
+                                         down_ratio=kwargs['down_ratio'],
+                                         max_objects=kwargs['max_objs'],
+                                         num_categories=kwargs['num_categories'],
+                                         image_size=kwargs['image_size'],
+                                         transform=None
+                                         )
 
-        model = safitty.get(config, "model_params", "backbone_params", "arch")
+        return {
+            'train': {
+                'dataset': train_dataset,
+                'collate_fn': FilteringCollateFn('bboxes', 'labels')
+            },
+            'valid': {
+                'dataset': valid_dataset,
+                'collate_fn': FilteringCollateFn('bboxes', 'labels')
+            },
+        }
 
-        num_epochs = safitty.get(config, "shared", "num_epochs")
-        batch_size = safitty.get(config, "shared", "batch_size")
-
-        image_size = safitty.get(
-            config, "shared", "image_size",
-            transform=lambda x: "x".join([str(i) for i in x])
-        )
-        result = f"{timestamp}" \
-            f"-model-{model}" \
-            f"-epochs-{num_epochs}" \
-            f"-bs-{batch_size}" \
-            f"-imgsize-{image_size}" \
-            f"-mini_epoch-{mini_epoch_len}" \
-            f"-dataset-{dataset}"
-
-        return result
-
+    '''
     @staticmethod
     def get_transforms(
         *,
@@ -124,7 +73,7 @@ class Experiment(ConfigExperiment):
         else:
             return infer_transform(height)
         return transforms
-
+    
     def get_datasets(
         self,
         stage: str,
@@ -224,3 +173,4 @@ class Experiment(ConfigExperiment):
             }
 
         return datasets
+    '''

@@ -133,16 +133,4 @@ class MeanAPCallback(Callback):
             self.classes_predictions: Dict[str, List[(bool, float)]] = {c: [] for c in self.classes}
 
 
-class MyDebugCallback(Callback):
-    def __init__(self):
-        super(MyDebugCallback, self).__init__(CallbackOrder.Metric)
-
-    def on_epoch_start(self, state: RunnerState):
-        print('epoch start')
-
-    def on_loader_end(self, state: RunnerState):
-        print('input:', state.input)
-        print('output:', state.output)
-
-
-__all__ = ["DecoderCallback", "MeanAPCallback", "MyDebugCallback"]
+__all__ = ["DecoderCallback", "MeanAPCallback"]
