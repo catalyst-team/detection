@@ -129,6 +129,8 @@ def draw_umich_gaussian(heatmap, center, radius, k=1):
 
 class DetectionDataset(Dataset):
     def __init__(self,
+                 annotation_file: str,
+                 images_dir: str,
                  down_ratio: int,
                  max_objects: int,
                  num_categories: Optional[int] = None,
@@ -136,20 +138,6 @@ class DetectionDataset(Dataset):
                  transform: Optional[Any] = None,
                  **kwargs
     ):
-
-        def process_kwargs_by_default_values(parameter, default_parameter):
-            if parameter not in kwargs:
-                if default_parameter not in kwargs:
-                    raise ValueError('You must specify \"{}\" or default value(\"{}\") in config'
-                                     .format(parameter, default_parameter))
-                else:
-                    kwargs[parameter] = kwargs[default_parameter]
-
-        process_kwargs_by_default_values('train_annotation_file', 'annotation_file')
-        process_kwargs_by_default_values('valid_annotation_file', 'annotaiton_file')
-        process_kwargs_by_default_values('train_images_dir', 'images_dir')
-        process_kwargs_by_default_values('valid_images_dir', 'images_dir')
-
         super(DetectionDataset, self).__init__()
 
         self._annotations_dataset = DetectionMSCOCODataset(annotation_file, images_dir)

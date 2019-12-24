@@ -26,6 +26,19 @@ class Experiment(ConfigExperiment):
             stage: str,
             **kwargs,
     ):
+        def process_kwargs_by_default_values(parameter, default_parameter):
+            if parameter not in kwargs:
+                if default_parameter not in kwargs:
+                    raise ValueError('You must specify \"{}\" or default value(\"{}\") in config'
+                                     .format(parameter, default_parameter))
+                else:
+                    kwargs[parameter] = kwargs[default_parameter]
+
+        process_kwargs_by_default_values('train_annotation_file', 'annotation_file')
+        process_kwargs_by_default_values('valid_annotation_file', 'annotaiton_file')
+        process_kwargs_by_default_values('train_images_dir', 'images_dir')
+        process_kwargs_by_default_values('valid_images_dir', 'images_dir')
+
         train_dataset = DetectionDataset(annotation_file=kwargs['train_annotation_file'],
                                          images_dir=kwargs['train_images_dir'],
                                          down_ratio=kwargs['down_ratio'],
@@ -55,122 +68,3 @@ class Experiment(ConfigExperiment):
                 'collate_fn': FilteringCollateFn('bboxes', 'labels')
             },
         }
-
-    '''
-    @staticmethod
-    def get_transforms(
-        *,
-        stage: str = None,
-        mode: str = None,
-        image_size: Tuple[int, int],
-    ):
-        height, width = image_size
-
-        if mode == "train":
-            transforms = train_transform(height)
-        elif mode == "valid":
-            transforms = valid_transform(height)
-        else:
-            return infer_transform(height)
-        return transforms
-    
-    def get_datasets(
-        self,
-        stage: str,
-        classes,
-        dataset_root,
-        image_size,
-        n_jobs: str,
-        image_folders: dict = None,
-        down_ratio: float = 1.0,
-        max_objs: int = 128,
-        sampler_params: dict = None,
-        train_samples: str = None,
-        valid_samples: str = None,
-    ):
-        datasets = OrderedDict()
-
-        class2id = dict(zip(classes, range(len(classes))))
-
-        dataset_root = Path(dataset_root)
-        data_dir = dataset_root
-
-        train_samples_path = dataset_root / train_samples
-        valid_samples_path = dataset_root / valid_samples
-
-        load = partial(
-            _load_data, n_jobs=n_jobs,
-            data_dir=data_dir, class2label=class2id, image_folders=image_folders
-        )
-
-        train_filepaths, train_bboxes, train_labels = load(samples_path=train_samples_path)
-
-        valid_filepaths, valid_bboxes, valid_labels = load(samples_path=valid_samples_path)
-
-        num_classes = len(classes)
-        if not stage.startswith("infer"):
-            collate_fn = FilteringCollateFn("bboxes", "labels", "filename")
-            train_set = DetectionDataset(
-                num_classes,
-                down_ratio,
-                max_objs,
-                train_filepaths, train_bboxes, train_labels,
-                image_size=image_size,
-                transform=self.get_transforms(
-                    mode="train",
-                    image_size=image_size
-                ),
-            )
-
-            valid_set = DetectionDataset(
-                num_classes,
-                down_ratio,
-                max_objs,
-                valid_filepaths, valid_bboxes, valid_labels,
-                image_size=image_size,
-                transform=self.get_transforms(
-                    mode="valid",
-                    image_size=image_size
-                ),
-            )
-
-            datasets["train"] = {
-                "dataset": train_set,
-                "collate_fn": collate_fn
-            }
-            tqdm.write(f"\nTrain dataset len: {len(train_set)}")
-
-            datasets["valid"] = {
-                "dataset": valid_set,
-                "collate_fn": collate_fn
-            }
-            tqdm.write(f"\nValid dataset len: {len(valid_set)}")
-
-            if sampler_params is not None:
-                safitty.set(
-                    datasets, "train", "sampler",
-                    value=MiniEpochSampler(
-                        data_len=len(train_set), **sampler_params
-                    )
-                )
-        else:
-            collate_fn = FilteringCollateFn("bboxes", "labels", "filename", "orig_image")
-            infer_set = DetectionDataset(
-                num_classes,
-                down_ratio,
-                max_objs,
-                valid_filepaths + train_filepaths,
-                valid_bboxes + train_bboxes,
-                valid_labels + train_labels,
-                transform=self.get_transforms(
-                    mode="valid",
-                    image_size=image_size
-                ),
-            )
-            datasets["infer"] = {
-                "dataset": infer_set,
-                "collate_fn": collate_fn
-            }
-
-        return datasets
-    '''
