@@ -43,24 +43,22 @@ stages:
     max_objs: *max_objs
     down_ratio: *down_ratio
 
+    # default values, will be used if something aren't specified
     annotation_file: ./data/annotation.json
-    images_dir: ./data/images/
+    images_dir: ./data/annotation.json
+
+    # Yщг may specify next parameters, data source will be overwritten
+    #train_annotation_file: ./data_train/annotation.json
+    #valid_annotation_file: ./data_valid/annotation.json
+    #train_images_dir: ./data_train/images/
+    #valid_images_dir: ./data_valid/images
+
     num_categories: *num_classes
     image_size: *image_size
 
-    #classes: *classes
-    #image_size: *image_size
-    #dataset_root: /data
-    #image_folders: "path"
-    #n_jobs: 1
-    #sampler_params:
-    #  mini_epoch_len: 40000
-    #  drop_last: true
-    #  shuffle: per_epoch
-    #train_samples: "train-detections.json"
-    #valid_samples: "valid-detections.json"
-    #down_ratio: *down_ratio
-    #max_objs: *max_objs
+    sampler_params:
+      drop_last: true
+      shuffle: per_epoch
 
   criterion_params:
     _key_value: True
@@ -132,9 +130,6 @@ stages:
         callback: SchedulerCallback
         reduce_metric: *main_metric
 
-      #debugger:
-      #  callback: MyDebugCallback
-
     #  decoder:
     #    callback: DecoderCallback
     #    down_ratio: *down_ratio
@@ -143,6 +138,6 @@ stages:
     #    callback: MeanAPCallback
     #    classes: *classes
 
-    #  saver:
-    #    callback: CheckpointCallback
-    #    save_n_best: 3
+      saver:
+        callback: CheckpointCallback
+        save_n_best: 3

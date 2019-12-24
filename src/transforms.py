@@ -1,8 +1,4 @@
-import cv2
-import torch
-
 import albumentations as A
-from albumentations.augmentations.functional import denormalize_bbox, normalize_bbox
 
 
 BBOX_PARAMS = dict(
@@ -10,6 +6,7 @@ BBOX_PARAMS = dict(
     min_visibility=0.2,
     label_fields=["labels"],
 )
+
 
 def pre_transform(image_size: int = 512):
     result = [
@@ -22,6 +19,7 @@ def pre_transform(image_size: int = 512):
     ]
 
     return A.Compose(result, bbox_params=BBOX_PARAMS)
+
 
 def augmentations(image_size: int):
     channel_augs = [

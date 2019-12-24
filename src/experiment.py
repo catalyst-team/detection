@@ -26,8 +26,8 @@ class Experiment(ConfigExperiment):
             stage: str,
             **kwargs,
     ):
-        train_dataset = DetectionDataset(annotation_file=kwargs['annotation_file'],
-                                         images_dir=kwargs['images_dir'],
+        train_dataset = DetectionDataset(annotation_file=kwargs['train_annotation_file'],
+                                         images_dir=kwargs['train_images_dir'],
                                          down_ratio=kwargs['down_ratio'],
                                          max_objects=kwargs['max_objs'],
                                          num_categories=kwargs['num_categories'],
@@ -36,8 +36,8 @@ class Experiment(ConfigExperiment):
                                          )
 
         # TODO TRAIN IS NOW EQUAL TO VAL
-        valid_dataset = DetectionDataset(annotation_file=kwargs['annotation_file'],
-                                         images_dir=kwargs['images_dir'],
+        valid_dataset = DetectionDataset(annotation_file=kwargs['valid_annotation_file'],
+                                         images_dir=kwargs['valid_images_dir'],
                                          down_ratio=kwargs['down_ratio'],
                                          max_objects=kwargs['max_objs'],
                                          num_categories=kwargs['num_categories'],
