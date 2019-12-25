@@ -1,17 +1,5 @@
-import datetime
-import os
-from collections import OrderedDict
-from functools import partial
-from itertools import repeat
-from multiprocessing import Pool
-from pathlib import Path
-from typing import Dict, Tuple, Optional
-
-import numpy as np
-import safitty
 import torch
 from catalyst.data.collate_fn import FilteringCollateFn
-from catalyst.data.sampler import MiniEpochSampler
 from catalyst.dl import ConfigExperiment
 
 from .dataset import DetectionDataset
@@ -45,7 +33,7 @@ class Experiment(ConfigExperiment):
                                          max_objects=kwargs['max_objs'],
                                          num_categories=kwargs['num_categories'],
                                          image_size=kwargs['image_size'],
-                                         transform=None
+                                         transform=train_transform(kwargs['image_size'][0])
                                          )
 
         # TODO TRAIN IS NOW EQUAL TO VAL
@@ -55,7 +43,7 @@ class Experiment(ConfigExperiment):
                                          max_objects=kwargs['max_objs'],
                                          num_categories=kwargs['num_categories'],
                                          image_size=kwargs['image_size'],
-                                         transform=None
+                                         transform=valid_transform(kwargs['image_size'][0])
                                          )
 
         return {
