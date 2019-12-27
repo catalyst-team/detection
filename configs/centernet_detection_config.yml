@@ -1,6 +1,6 @@
 shared:
   classes: &classes ["person"]
-  num_classes: &num_classes 1
+  num_categories: &num_categories 1
 
   image_size: &image_size [224, 224]
   down_ratio: &down_ratio 4 # (height of input image / height of predicted heatmap)
@@ -16,7 +16,7 @@ shared:
 
 model_params:
  model: ResnetCenterNet
- num_classes: *num_classes
+ num_categories: *num_categories
  embedding_dim: 128
  arch: "ResnetFPNUnet"
  down_ratio: *down_ratio
@@ -45,7 +45,7 @@ stages:
 
     # default values, will be used if something aren't specified
     annotation_file: ./data/annotation.json
-    images_dir: ./data/annotation.json
+    images_dir: ./data/images
 
     # You may specify next parameters, data source will be overwritten
     #train_annotation_file: ./data_train/annotation.json
@@ -53,7 +53,7 @@ stages:
     #train_images_dir: ./data_train/images/
     #valid_images_dir: ./data_valid/images
 
-    num_categories: *num_classes
+    num_categories: *num_categories
     image_size: *image_size
 
     sampler_params:
@@ -130,13 +130,14 @@ stages:
         callback: SchedulerCallback
         reduce_metric: *main_metric
 
-    #  decoder:
-    #    callback: DecoderCallback
-    #    down_ratio: *down_ratio
-    #    max_objs: *max_objs
-    #  mAP:
-    #    callback: MeanAPCallback
-    #    classes: *classes
+      decoder:
+        callback: DecoderCallback
+        down_ratio: *down_ratio
+        max_objs: *max_objs
+
+      # mAP:
+      #  callback: MeanAPCallback
+      #  num_categories: *num_categories
 
       saver:
         callback: CheckpointCallback

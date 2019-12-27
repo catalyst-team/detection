@@ -52,11 +52,6 @@ def get_affine_transform(
 
 
 def affine_transform(point: np.array, transform_matrix: np.array) -> np.array:
-    """
-    :param point: np.ndarray with shape (2, )
-    :param transform_matrix:
-    :return:
-    """
     new_pt = np.array([point[0], point[1], 1.], dtype=np.float32).T
     new_pt = np.dot(transform_matrix, new_pt)
     return new_pt[:2]
@@ -239,6 +234,8 @@ class DetectionDataset(Dataset):
                 reg[i] = _center - _center_int
                 reg_mask[i] = 1
 
+
+
         result = {
             "filename": image_name,
             "input":    torch.from_numpy(input),
@@ -247,7 +244,7 @@ class DetectionDataset(Dataset):
             "ind":      torch.from_numpy(ind),
             "wh":       torch.from_numpy(width_height),
             "reg":      torch.from_numpy(reg),
-            "bboxes":   np.array(new_bboxes),
+            "bboxes":   np.array(bboxes),
             "labels":   np.array(labels),
         }
 

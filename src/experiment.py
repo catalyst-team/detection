@@ -1,3 +1,5 @@
+import warnings
+
 import torch
 from catalyst.data.collate_fn import FilteringCollateFn
 from catalyst.dl import ConfigExperiment
@@ -23,9 +25,12 @@ class Experiment(ConfigExperiment):
                     kwargs[parameter] = kwargs[default_parameter]
 
         process_kwargs_by_default_values('train_annotation_file', 'annotation_file')
-        process_kwargs_by_default_values('valid_annotation_file', 'annotaiton_file')
+        process_kwargs_by_default_values('valid_annotation_file', 'annotation_file')
         process_kwargs_by_default_values('train_images_dir', 'images_dir')
         process_kwargs_by_default_values('valid_images_dir', 'images_dir')
+
+        if kwargs['train_annotation_file'] == kwargs['valid_annotation_file']:
+            warnings.warn("Valid is now equal to train, is it expected?", RuntimeWarning)
 
         train_dataset = DetectionDataset(annotation_file=kwargs['train_annotation_file'],
                                          images_dir=kwargs['train_images_dir'],
@@ -36,7 +41,6 @@ class Experiment(ConfigExperiment):
                                          transform=train_transform(kwargs['image_size'][0])
                                          )
 
-        # TODO TRAIN IS NOW EQUAL TO VAL
         valid_dataset = DetectionDataset(annotation_file=kwargs['valid_annotation_file'],
                                          images_dir=kwargs['valid_images_dir'],
                                          down_ratio=kwargs['down_ratio'],

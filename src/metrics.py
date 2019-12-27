@@ -55,7 +55,7 @@ def calculate_map(predictions: List[Tuple[bool, float]], use_false_negatives: bo
     if len(predictions) == 1:
         return 1
 
-    result: float = average_precision_score(true_labels, scores)
+    result = average_precision_score(true_labels, scores)
     return result
 
 

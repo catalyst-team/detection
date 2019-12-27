@@ -2,20 +2,15 @@ from typing import List, Dict
 
 import numpy as np
 from catalyst.dl import Callback, RunnerState, CallbackOrder, CriterionCallback
+from catalyst.utils import detach
+
 from .losses.ctdet_loss import decode_centernet_predictions
 from .metrics import class_agnostic_mean_ap, calculate_map, construct_mAP_list_from_bboxes
 
 
-def detach(tensor) -> np.ndarray:
-    """
-    Detaches the input tensor to a numpy array
-    """
-    return tensor.detach().cpu().numpy()
-
-
 class DecoderCallback(Callback):
     def __init__(self, down_ratio: int = 1, max_objs: int = 80):
-        super().__init__(CallbackOrder.Metric - 1)
+        super().__init__(order=CallbackOrder.Metric - 1)
         self.down_ratio = down_ratio
         self.max_objs = max_objs
 
@@ -47,23 +42,23 @@ class DecoderCallback(Callback):
 class MeanAPCallback(Callback):
     def __init__(
             self,
+            num_categories: int = None,
             prefix: str = "mAP",
-            classes: List[str] = None,
             bboxes_key: str = "bboxes",
             scores_key: str = "scores",
             labels_key: str = "labels",
-            iou_threshold: float = .9
+            iou_threshold: float = 0.9
     ):
-        super().__init__(CallbackOrder.Metric)
+        super().__init__(order=CallbackOrder.Metric)
         self.prefix = prefix
-        self.classes = classes if classes is not None else []
+        self.classes = list(range(num_categories))
         self.mean_mAP = []
 
         self.bboxes_key = bboxes_key
         self.scores_key = scores_key
         self.labels_key = labels_key
         # List (dictionary value) contains of pairs of correct/not correct bboxes and model confidence by class
-        self.classes_predictions: Dict[str, List[(bool, float)]] = {c: [] for c in classes}
+        self.classes_predictions: Dict[str, List[(bool, float)]] = {c: [] for c in range(num_categories)}
         self.iou_threshold = iou_threshold
 
     def on_batch_end(self, state: RunnerState):
@@ -116,19 +111,19 @@ class MeanAPCallback(Callback):
         if state.loader_name.startswith("valid"):
             all_predictions = []
             for class_name, predictions in self.classes_predictions.items():
-                metric_name = f"{self.prefix}/{class_name}"
-                mAP = calculate_map(predictions)
-                state.metrics.epoch_values[state.loader_name][metric_name] = mAP
+                # metric_name = f"{self.prefix}/{class_name}"
+                # mAP = calculate_map(predictions)
+                # state.metrics.epoch_values[state.loader_name][metric_name] = mAP
                 all_predictions.extend(predictions)
 
-            mean_AP = calculate_map(all_predictions)
-            state.metrics.epoch_values[state.loader_name][f'{self.prefix}/_mean'] = mean_AP
+            # mean_AP = calculate_map(all_predictions)
+            # state.metrics.epoch_values[state.loader_name][f'{self.prefix}/_mean'] = mean_AP
 
             ap_with_false_negatives = calculate_map(all_predictions, use_false_negatives=True)
             state.metrics.epoch_values[state.loader_name][f'{self.prefix}/_mean_with_fn'] = ap_with_false_negatives
 
             # old mAP
-            state.metrics.epoch_values[state.loader_name][f'{self.prefix}/_mean_old'] = np.mean(self.mean_mAP)
+            # state.metrics.epoch_values[state.loader_name][f'{self.prefix}/_mean_old'] = np.mean(self.mean_mAP)
             self.mean_mAP = []
             self.classes_predictions: Dict[str, List[(bool, float)]] = {c: [] for c in self.classes}
 
