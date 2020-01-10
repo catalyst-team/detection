@@ -7,7 +7,7 @@ import torch.nn as nn
 class CenterNet(nn.Module):
     def __init__(
         self,
-        num_categories: int,
+        num_classes: int,
         model_fn: Callable,
         down_ratio: int = 1,
         embedding_dim: int = 128,
@@ -15,7 +15,7 @@ class CenterNet(nn.Module):
         backbone_key: str = None
     ):
         super().__init__()
-        self.num_classes = num_categories
+        self.num_classes = num_classes
         self.embedding_dim = embedding_dim
 
         model_params = model_params or {}

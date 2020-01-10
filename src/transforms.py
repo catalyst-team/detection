@@ -50,8 +50,12 @@ def augmentations(image_size: int):
             contrast_limit=0.5,
             p=0.5
         ),
+        A.RandomGamma(p=0.5),
+        A.OneOf([
+            A.MedianBlur(p=0.5),
+            A.MotionBlur(p=0.5)
+        ]),
         A.RandomGamma(gamma_limit=(85, 115), p=0.5),
-        A.JpegCompression(quality_lower=60, quality_upper=99, p=0.5),
     ]
     return A.Compose(result, bbox_params=BBOX_PARAMS)
 

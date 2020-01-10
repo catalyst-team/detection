@@ -104,5 +104,5 @@ class DetectionMSCOCODataset(Dataset):
     def __len__(self) -> int:
         return len(self._img_ids)
 
-    def get_num_categories(self) -> int:
+    def get_num_classes(self) -> int:
         return len(self._cat_ids)

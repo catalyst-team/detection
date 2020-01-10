@@ -128,7 +128,7 @@ class DetectionDataset(Dataset):
                  images_dir: str,
                  down_ratio: int,
                  max_objects: int,
-                 num_categories: Optional[int] = None,
+                 num_classes: Optional[int] = None,
                  image_size: Tuple[int, int] = (224, 224),
                  transform: Optional[Any] = None,
                  **kwargs
@@ -137,9 +137,9 @@ class DetectionDataset(Dataset):
 
         self._annotations_dataset = DetectionMSCOCODataset(annotation_file, images_dir)
 
-        self._num_categories = num_categories
-        if self._num_categories is None:
-            self._num_categories = self._annotations_dataset.get_num_categories()
+        self._num_classes = num_classes
+        if self._num_classes is None:
+            self._num_classes = self._annotations_dataset.get_num_classes()
 
         self._down_ratio = down_ratio
         self._max_objects = max_objects
@@ -200,7 +200,7 @@ class DetectionDataset(Dataset):
         output_width = input_width // self._down_ratio
         # trans_output = get_affine_transform(center, scale, 0, [output_width, output_height])
 
-        heatmap = np.zeros((self._num_categories, output_height, output_width), dtype=np.float32)
+        heatmap = np.zeros((self._num_classes, output_height, output_width), dtype=np.float32)
         width_height = np.zeros((self._max_objects, 2), dtype=np.float32)
 
         reg = np.zeros((self._max_objects, 2), dtype=np.float32)

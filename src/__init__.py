@@ -11,7 +11,6 @@ from .losses import CenterNetDetectionLoss, \
 from . import models
 
 
-
 registry.Criterion(CenterNetDetectionLoss)
 registry.Criterion(RegL1Loss)
 registry.Criterion(MSEIndLoss)

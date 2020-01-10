@@ -42,7 +42,7 @@ class DecoderCallback(Callback):
 class MeanAPCallback(Callback):
     def __init__(
             self,
-            num_categories: int = None,
+            num_classes: int = None,
             prefix: str = "mAP",
             bboxes_key: str = "bboxes",
             scores_key: str = "scores",
@@ -51,14 +51,14 @@ class MeanAPCallback(Callback):
     ):
         super().__init__(order=CallbackOrder.Metric)
         self.prefix = prefix
-        self.classes = list(range(num_categories))
+        self.classes = list(range(num_classes))
         self.mean_mAP = []
 
         self.bboxes_key = bboxes_key
         self.scores_key = scores_key
         self.labels_key = labels_key
         # List (dictionary value) contains of pairs of correct/not correct bboxes and model confidence by class
-        self.classes_predictions: Dict[str, List[(bool, float)]] = {c: [] for c in range(num_categories)}
+        self.classes_predictions: Dict[str, List[(bool, float)]] = {c: [] for c in range(num_classes)}
         self.iou_threshold = iou_threshold
 
     def on_batch_end(self, state: RunnerState):

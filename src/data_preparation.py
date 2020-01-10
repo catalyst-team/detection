@@ -97,15 +97,17 @@ class COCODetectionFactory:
                  year: Union[str, int] = "",
                  contributor: str = "",
                  date_created: str = ""):
-        """
-        Set information in mscoco format
-        :param description:
-        :param url:
-        :param version:
-        :param year:
-        :param contributor:
-        :param date_created:
-        :return: reference to current COCODetectionFactory object
+        """Set information in mscoco format
+        Args:
+            description (str): dataset description
+            url (str): dataset url
+            version (str): dataset version
+            year (Union[str, int]): dataset year
+            contributor (str): contribution info
+            date_created (str): date
+
+        Return:
+            COCODetectionFactory: reference to current COCODetectionFactory object
         """
 
         self._output['info'] = {
@@ -123,12 +125,15 @@ class COCODetectionFactory:
                     licence_id: Optional[int] = None,
                     name: str = "",
                     url: str = "") -> Any:
-        """
-        Adds license to dataset, dataset may contain more then one license, it will be stored as list
-        :param licence_id: id of license, must be unique, if None random unique value will be used
-        :param name: name of license
-        :param url: url to license
-        :return: id of license
+        """Adds license to dataset, dataset may contain more then one license, it will be stored as list
+
+        Args:
+            licence_id (optional[int]): id of license, must be unique, if None random unique value will be used
+            name (str): name of license
+            url(str): url to license
+
+        Returns:
+            int: id of license
         """
 
         if licence_id is None:
@@ -147,12 +152,14 @@ class COCODetectionFactory:
                      category_id: Optional[int] = None,
                      name: str = "",
                      supercategory: str = ""):
-        """
-        Adds category to detaset
-        :param category_id: id of category, must be unique, if None random unique value will be used
-        :param name: name of category, must be unique for dataset
-        :param supercategory: name of supercategory
-        :return: id of category
+        """ Adds category to dataset
+
+        Args:
+            category_id (int): id of category, must be unique, if None random unique value will be used
+            name (str): name of category, must be unique for dataset
+            supercategory (str): name of supercategory
+        Returns:
+             int: id of category
         """
         if category_id is None:
             category_id = self._category_ids.get_new_id()
@@ -175,13 +182,15 @@ class COCODetectionFactory:
                   file_name: str = "",
                   height: Optional[int] = None,
                   width: Optional[int] = None) -> Any:
-        """
-        Adds image to dataset
-        :param image_id: id of image, must be unique, if None random unique value will be used
-        :param file_name: filename where image stored, must be unique for dataset
-        :param height: height of image
-        :param width: width of image
-        :return: id of image
+        """ Adds image to dataset
+
+        Args:
+            image_id (Optional[int]): id of image, must be unique, if None random unique value will be used
+            file_name (str): filename where image stored, must be unique for dataset
+            height (Optional[int]): height of image
+            width (optional[int]): width of image
+        Returns:
+            int: id of image
         """
 
         if image_id is None:
@@ -212,22 +221,23 @@ class COCODetectionFactory:
                  category_id: Optional[int] = None,
                  category_name: Optional[str] = None,
                  iscrowd: bool = False):
-        """
-        Adds bounting box to image in dataset
+        """Adds bounding box to image in dataset
         
         One of image_id and image_file_name must be specified. If both image_id will be used
         One of category_id and category_name must be specified. If both category_id will be used
-        
-        :param bbox_left: 
-        :param bbox_top: 
-        :param bbox_width:
-        :param bbox_height:
-        :param image_id: if None may be computed from image_file_name. Image_id may be unknown
-        :param image_file_name: None or name of file added to dataset
-        :param category_id: if None may be computed from category_name. Category_id may be unknown
-        :param category_name: None or name of category added to dataset
-        :param iscrowd:
-        :return: id of bbox
+
+        Args:
+            bbox_left (int):
+            bbox_top (int):
+            bbox_width (int):
+            bbox_height (int):
+            image_id (Optional[int]): if None may be computed from image_file_name. Image_id may be unknown
+            image_file_name (Optional[str]): None or name of file added to dataset
+            category_id (Optional[int]): if None may be computed from category_name. Category_id may be unknown
+            category_name (Optional[str]): None or name of category added to dataset
+            iscrowd (bool):
+        Returns:
+            int: id of bbox
         """
 
         if image_id is None and image_file_name is None:
@@ -262,13 +272,18 @@ class COCODetectionFactory:
 
     def get_dict(self) -> Dict[str, Any]:
         """
-        :return: dict in mscoco format
+        Args:
+
+        Returns:
+            Dict[str, Any]: dict in mscoco format
         """
         return self._output
 
     def get_json(self, **kwargs) -> str:
         """
-        :param kwargs: passed to json.dumps
-        :return: dataset in json format
+        Args:
+            **kwargs: passed to json.dumps
+        Returns:
+            str: dataset in json format
         """
         return json.dumps(self._output, **kwargs)

@@ -36,7 +36,7 @@ class Experiment(ConfigExperiment):
                                          images_dir=kwargs['train_images_dir'],
                                          down_ratio=kwargs['down_ratio'],
                                          max_objects=kwargs['max_objs'],
-                                         num_categories=kwargs['num_categories'],
+                                         num_classes=kwargs['num_classes'],
                                          image_size=kwargs['image_size'],
                                          transform=train_transform(kwargs['image_size'][0])
                                          )
@@ -45,7 +45,7 @@ class Experiment(ConfigExperiment):
                                          images_dir=kwargs['valid_images_dir'],
                                          down_ratio=kwargs['down_ratio'],
                                          max_objects=kwargs['max_objs'],
-                                         num_categories=kwargs['num_categories'],
+                                         num_classes=kwargs['num_classes'],
                                          image_size=kwargs['image_size'],
                                          transform=valid_transform(kwargs['image_size'][0])
                                          )

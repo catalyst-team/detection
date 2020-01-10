@@ -129,7 +129,7 @@ class FocalLoss(nn.Module):
 class RegL1Loss(nn.Module):
     def __init__(
         self,
-        key: str,
+        key: str = "",
         mask_key: str = "reg_mask",
         ind_key: str = "ind",
         debug: bool = False
@@ -140,12 +140,17 @@ class RegL1Loss(nn.Module):
         self.ind_key = ind_key
         self.debug = debug
 
-    def forward(self, outputs, targets):
-        result = self._forward(
-            outputs[self.key], targets[self.mask_key],
-            targets[self.ind_key], targets[self.key]
-        )
+    #def forward(self, outputs, targets):
+    #    result = self._forward(
+    #        outputs[self.key], targets[self.mask_key],
+    #        targets[self.ind_key], targets[self.key]
+    #    )
+    #    return result
 
+    def forward(self, outputs_key, targets_mask_key, targets_ind_key, targets_key):
+        result = self._forward(
+            outputs_key, targets_mask_key, targets_ind_key, targets_key
+        )
         return result
 
     def _forward(self, output, mask, ind, target):

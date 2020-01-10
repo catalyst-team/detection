@@ -1,6 +1,6 @@
 shared:
   classes: &classes ["person"]
-  num_categories: &num_categories 1
+  num_classes: &num_classes 1
 
   image_size: &image_size [224, 224]
   down_ratio: &down_ratio 4 # (height of input image / height of predicted heatmap)
@@ -16,7 +16,7 @@ shared:
 
 model_params:
  model: ResnetCenterNet
- num_categories: *num_categories
+ num_classes: *num_classes
  embedding_dim: 128
  arch: "ResnetFPNUnet"
  down_ratio: *down_ratio
@@ -53,7 +53,7 @@ stages:
     #train_images_dir: ./data_train/images/
     #valid_images_dir: ./data_valid/images
 
-    num_categories: *num_categories
+    num_classes: *num_classes
     image_size: *image_size
 
     sampler_params:
@@ -63,14 +63,12 @@ stages:
   criterion_params:
     _key_value: True
 
-    hm:
+    l_hm:
       criterion: CenterNetDetectionLoss
     l1_wh:
       criterion: RegL1Loss
-      key: wh
     l1_reg:
       criterion: RegL1Loss
-      key: reg
 
   scheduler_params:
      scheduler: MultiStepLR
@@ -95,19 +93,29 @@ stages:
         input_key: hm
         output_key: hm
         prefix: loss_hm
-        criterion_key: hm
+        criterion_key: l_hm
         multiplier: *hm_weight
+
       loss_wh:
         callback: CriterionCallback
-        input_key: null
-        output_key: null
+        input_key:
+          reg_mask: targets_mask_key
+          ind: targets_ind_key
+          wh: targets_key
+        output_key:
+          wh: outputs_key
         prefix: loss_wh
         criterion_key: l1_wh
         multiplier: *wh_weight
+
       loss_reg:
         callback: CriterionCallback
-        input_key: null
-        output_key: null
+        input_key:
+          reg_mask: targets_mask_key
+          ind: targets_ind_key
+          reg: targets_key
+        output_key:
+          reg: outputs_key
         prefix: loss_reg
         criterion_key: l1_reg
         multiplier: *off_weight
@@ -116,8 +124,8 @@ stages:
         callback: CriterionAggregatorCallback
         prefix: &aggregated_loss loss
         loss_keys: ["loss_hm", "loss_wh", "loss_reg"]
-        loss_aggregate_fn: "sum" # "sum" or "mean"
-        multiplier: 1.0 # scale factor for the aggregated loss
+        loss_aggregate_fn: "sum"
+        multiplier: 1.0
 
       optimizer:
         callback: OptimizerCallback
@@ -137,7 +145,7 @@ stages:
 
       # mAP:
       #  callback: MeanAPCallback
-      #  num_categories: *num_categories
+      #  num_classes: *num_classes
 
       saver:
         callback: CheckpointCallback

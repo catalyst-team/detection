@@ -6,7 +6,7 @@ from .centernet import CenterNet
 class ResnetCenterNet(CenterNet):
     def __init__(
         self,
-        num_categories: int,
+        num_classes: int,
         down_ratio: int = 1,
         embedding_dim: int = 128,
         arch: str = "ResnetFPNUnet",
@@ -17,7 +17,7 @@ class ResnetCenterNet(CenterNet):
         backbone_params = backbone_params or {}
         model_params = {"num_classes": embedding_dim, **backbone_params}
         super().__init__(
-            num_categories=num_categories,
+            num_classes=num_classes,
             model_fn=model_fn,
             down_ratio=down_ratio,
             embedding_dim=embedding_dim,
