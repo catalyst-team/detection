@@ -1,6 +1,6 @@
-catalyst
 albumentations==0.2.3
-packaging
+packaging==19.2
 numpy==1.17.4
 pycocotools==2.0.0
-torch
+torch==1.3.0
+catalyst==20.1
