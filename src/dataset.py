@@ -14,12 +14,12 @@ cv2.ocl.setUseOpenCL(False)
 
 
 def get_affine_transform(
-    center,
-    scale,
-    rot,
-    output_size,
-    shift=np.array([0, 0], dtype=np.float32),
-    inv=0
+        center,
+        scale,
+        rot,
+        output_size,
+        shift=np.array([0, 0], dtype=np.float32),
+        inv=0
 ):
     if not isinstance(scale, np.ndarray) and not isinstance(scale, list):
         scale = np.array([scale, scale], dtype=np.float32)
@@ -132,7 +132,7 @@ class DetectionDataset(Dataset):
                  image_size: Tuple[int, int] = (224, 224),
                  transform: Optional[Any] = None,
                  **kwargs
-    ):
+                 ):
         super(DetectionDataset, self).__init__()
 
         self._annotations_dataset = DetectionMSCOCODataset(annotation_file, images_dir)
@@ -161,30 +161,50 @@ class DetectionDataset(Dataset):
 
         image = cv2.resize(image, (self.image_size, self.image_size), cv2.INTER_LINEAR)
 
-        detections = [{
-            'category_id': detection['category_id'],
-            'category_name': detection['category_name'],
-            'bbox': detection['bbox'].copy()
-            } for detection in detections]
+        detections = [
+            {
+                'category_id': detection['category_id'],
+                'category_name': detection['category_name'],
+                'bbox': detection['bbox'].copy()
+            } for detection in detections
+        ]
+
         for detection in detections:
             detection['bbox'][0::2] *= x_scale
             detection['bbox'][1::2] *= y_scale
 
-        bboxes = np.array([detection['bbox'] for detection in detections])
-        labels = np.array([detection['category_id'] for detection in detections])
+        bboxes = []
+        labels = []
+        for detection in detections:
+            median_x = (detection['bbox'][0] + detection['bbox'][2]) // 2
+            median_y = (detection['bbox'][1] + detection['bbox'][3]) // 2
+
+            # CenterNet are VERY bad when center of detected objects not in the images
+            # Let's delete this bboxes
+            if not (0 <= median_x <= image.shape[1]) or not (0 <= median_y <= image.shape[0]):
+                continue
+
+            detection['bbox'][0::2] = np.clip(detection['bbox'][0::2], 0, image.shape[1])
+            detection['bbox'][1::2] = np.clip(detection['bbox'][1::2], 0, image.shape[0])
+
+            bboxes.append(detection['bbox'])
+            labels.append(detection['category_id'])
+
+        bboxes = np.array(bboxes)
+        labels = np.array(labels)
 
         if self.transform is not None:
             result = self.transform(
                 image=image,
                 bboxes=bboxes,
                 labels=labels,
-                )
+            )
         else:
             result = dict(
                 image=image,
                 bboxes=bboxes,
                 labels=labels,
-                )
+            )
 
         image = result["image"].astype(np.uint8)
         bboxes = result["bboxes"]
@@ -226,7 +246,7 @@ class DetectionDataset(Dataset):
                 _center = np.array(
                     [(bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2],
                     dtype=np.float32
-                    )
+                )
                 _center_int = _center.astype(np.int32)
                 draw_gaussian(heatmap[class_id], _center_int, radius)
                 width_height[i] = 1. * w, 1. * h
@@ -234,18 +254,16 @@ class DetectionDataset(Dataset):
                 reg[i] = _center - _center_int
                 reg_mask[i] = 1
 
-
-
         result = {
             "filename": image_name,
-            "input":    torch.from_numpy(input),
-            "hm":       torch.from_numpy(heatmap),
+            "input": torch.from_numpy(input),
+            "hm": torch.from_numpy(heatmap),
             "reg_mask": torch.from_numpy(reg_mask),
-            "ind":      torch.from_numpy(ind),
-            "wh":       torch.from_numpy(width_height),
-            "reg":      torch.from_numpy(reg),
-            "bboxes":   np.array(bboxes),
-            "labels":   np.array(labels),
+            "ind": torch.from_numpy(ind),
+            "wh": torch.from_numpy(width_height),
+            "reg": torch.from_numpy(reg),
+            "bboxes": np.array(bboxes),
+            "labels": np.array(labels),
         }
 
         return result

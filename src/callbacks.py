@@ -87,7 +87,7 @@ class MeanAPCallback(Callback):
                     labels_ = labels_[scores_ > 0]
                     scores_ = scores_[scores_ > 0]
 
-                    mask = labels_ == i
+                    mask = (labels_ == i)
                     predict_bboxes_batch.append(bboxes_[mask])
                     predict_scores_batch.append(scores_[mask])
 

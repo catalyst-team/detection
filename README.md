@@ -12,3 +12,5 @@ Based on [Objects as points](https://arxiv.org/abs/1904.07850) article by [Xingy
 1. Specify perameters and in ```config/centernet_detection_config.yml```.
 
 1. Run catalyst ```catalyst-dl run --config=./configs/centernet_detection_config.yml```
+
+1. When you change dataset, you must delete cache files ```markup_*.json.cache``` because this files contain preprocessed bounding boxes info.

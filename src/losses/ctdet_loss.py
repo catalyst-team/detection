@@ -91,7 +91,7 @@ def decode_centernet_predictions(
         batch, cat, height, width = heat.size()
         # mask = reg_mask.unsqueeze(2).expand_as(pred).float()
 
-        # heat = torch.sigmoid(heat)
+        heat = torch.sigmoid(heat)
         # perform nms on heatmaps
         heat = _nms(heat)
 
@@ -140,7 +140,7 @@ class RegL1Loss(nn.Module):
         self.ind_key = ind_key
         self.debug = debug
 
-    #def forward(self, outputs, targets):
+    # def forward(self, outputs, targets):
     #    result = self._forward(
     #        outputs[self.key], targets[self.mask_key],
     #        targets[self.ind_key], targets[self.key]
