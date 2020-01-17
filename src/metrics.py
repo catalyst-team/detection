@@ -6,12 +6,16 @@ from sklearn.metrics import average_precision_score
 
 def construct_mAP_list_from_bboxes(predicted_bboxes, scores, gt_bboxes, iou_threshold=.9) -> List[Tuple[bool, float]]:
     """
-    :param predicted_bboxes: np.array of shape (n, 4) with predictions
-    :param scores: np.array of shape (n,) with model confidences
-    :param gt_bboxes: np.array of shape(n, 4) with ground truth bboxes
-    :param iou_threshold:
-    :return:
+    Args:
+        predicted_bboxes (np.array): predictions
+        scores (np.array): model confidences
+        gt_bboxes (np.array): ground truth bboxes
+        iou_threshold (float): between 0 and 1, iou threshold to mAP metric
+
+    Returns:
+        List[Tuple[bool, float]]: mAP list
     """
+
     ious_matrix = bbox_iou(predicted_bboxes, gt_bboxes)
     result = _construct_list_for_map(ious_matrix, scores, iou_thresh=iou_threshold)
     return result
@@ -19,11 +23,14 @@ def construct_mAP_list_from_bboxes(predicted_bboxes, scores, gt_bboxes, iou_thre
 
 def _construct_list_for_map(ious_matrix, scores, iou_thresh=.9) -> List[Tuple[bool, float]]:
     """
-    :param ious_matrix: np.array of shape (n, m) with ious between predicted and ground-truth objects
-    :param scores: np.array of shape (n) with model confidences for objects
-    :param iou_thresh:
-    :return:
+    Args:
+        ious_matrix (np.array): array ious between predicted and ground-truth objects
+        scores (np.array): array of shape (n) with model confidences for objects
+        iou_thresh (float): between 0 and 1, iou threshold to mAP metric
+    Returns:
+        List[Tuple[bool, float]]: mAP list
     """
+
     ious_thresholded = ious_matrix > iou_thresh
     correct_bboxes = np.where(ious_thresholded.sum(axis=1).astype(bool))[0]
     incorrect_bboxes = np.where(~ious_thresholded.sum(axis=1).astype(bool))[0]
@@ -37,11 +44,13 @@ def _construct_list_for_map(ious_matrix, scores, iou_thresh=.9) -> List[Tuple[bo
 
 
 def calculate_map(predictions: List[Tuple[bool, float]], use_false_negatives: bool = False) -> float:
-    """
-    Calculates average precision metric for list of predictions with confidences
-    :param predictions:  List of Tuples containing all predicted bboxes with scores and corrent/incorrect flag
-    :param use_false_negatives: Flag to use false negatives in metric
-    :return: average precision
+    """Calculates average precision metric for list of predictions with confidences
+
+    Args:
+        predictions (List[Tuple[...]]):  List of Tuples containing all predicted bboxes with scores and corrent/incorrect flag
+        use_false_negatives (bool): Flag to use false negatives in metric
+    Returns:
+         float: average precision
     """
     predictions = np.array(predictions)
     if not use_false_negatives:
@@ -55,7 +64,7 @@ def calculate_map(predictions: List[Tuple[bool, float]], use_false_negatives: bo
     if len(predictions) == 1:
         return 1
 
-    result: float = average_precision_score(true_labels, scores)
+    result = average_precision_score(true_labels, scores)
     return result
 
 

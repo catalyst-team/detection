@@ -2,31 +2,35 @@ shared:
   classes: &classes ["person"]
   num_classes: &num_classes 1
 
-  image_size: &image_size [512, 512]
-  down_ratio: &down_ratio 4 # 1
-  max_objs: &max_objs 15
+  image_size: &image_size [224, 224]
+  down_ratio: &down_ratio 4 # (height of input image / height of predicted heatmap)
+  max_objs: &max_objs 15 # max objects detected per image, passed to DetectorCallback
 
   num_epochs: &num_epochs 200
-  lr: &lr 0.0003
+  lr: &lr 0.001
   weight_decay: &wd 0.0001
 
   hm_weight: &hm_weight 1.0
-  wh_weight: &wh_weight 0.1
-  off_weight: &off_weight 1.0
-
+  wh_weight: &wh_weight 10.0
+  off_weight: &off_weight 10.0
 
 model_params:
  model: ResnetCenterNet
  num_classes: *num_classes
  embedding_dim: 128
  arch: "ResnetFPNUnet"
+ down_ratio: *down_ratio
  backbone_params:
-   arch: resnet34
+   arch: resnet18
    pretrained: true
+
+runner_params:
+  input_key: "input"
+  output_key: null
 
 args:
   expdir: src
-#  logdir:
+  logdir: logs
 
 stages:
   state_params:
@@ -34,39 +38,42 @@ stages:
     minimize_metric: &minimize_metric true
 
   data_params:
-    num_workers: 8
-    batch_size: 15
+    num_workers: 0
+    batch_size: 5
+    max_objs: *max_objs
+    down_ratio: *down_ratio
 
-    classes: *classes
+    # default values, will be used if something aren't specified
+    annotation_file: ./data/annotation.json
+    images_dir: ./data/images
+
+    # You may specify next parameters, data source will be overwritten
+    #train_annotation_file: ./data_train/annotation.json
+    #valid_annotation_file: ./data_valid/annotation.json
+    #train_images_dir: ./data_train/images/
+    #valid_images_dir: ./data_valid/images
+
+    num_classes: *num_classes
     image_size: *image_size
-    dataset_root: /data
-    image_folders: "path"
-    n_jobs: 1
+
     sampler_params:
-      mini_epoch_len: 40000
       drop_last: true
       shuffle: per_epoch
-    train_samples: "train-detections.json"
-    valid_samples: "valid-detections.json"
-    down_ratio: *down_ratio
-    max_objs: *max_objs
 
   criterion_params:
     _key_value: True
 
-    hm:
+    l_hm:
       criterion: CenterNetDetectionLoss
     l1_wh:
       criterion: RegL1Loss
-      key: wh
     l1_reg:
       criterion: RegL1Loss
-      key: reg
 
-  # scheduler_params:
-  #   scheduler: MultiStepLR
-  #   milestones: [12, 40]
-  #   gamma: 0.8
+  scheduler_params:
+     scheduler: MultiStepLR
+     milestones: [12, 40]
+     gamma: 0.8
 
   stage1:
     state_params:
@@ -86,19 +93,29 @@ stages:
         input_key: hm
         output_key: hm
         prefix: loss_hm
-        criterion_key: hm
+        criterion_key: l_hm
         multiplier: *hm_weight
+
       loss_wh:
         callback: CriterionCallback
-        input_key: null
-        output_key: null
+        input_key:
+          reg_mask: targets_mask_key
+          ind: targets_ind_key
+          wh: targets_key
+        output_key:
+          wh: outputs_key
         prefix: loss_wh
         criterion_key: l1_wh
         multiplier: *wh_weight
+
       loss_reg:
         callback: CriterionCallback
-        input_key: null
-        output_key: null
+        input_key:
+          reg_mask: targets_mask_key
+          ind: targets_ind_key
+          reg: targets_key
+        output_key:
+          reg: outputs_key
         prefix: loss_reg
         criterion_key: l1_reg
         multiplier: *off_weight
@@ -106,10 +123,9 @@ stages:
       loss_aggregator:
         callback: CriterionAggregatorCallback
         prefix: &aggregated_loss loss
-        loss_keys: [
-          "loss_hm", "loss_wh", "loss_reg"]
-        loss_aggregate_fn: "sum" # "sum" or "mean"
-        multiplier: 1.0 # scale factor for the aggregated loss
+        loss_keys: ["loss_hm", "loss_wh", "loss_reg"]
+        loss_aggregate_fn: "sum"
+        multiplier: 1.0
 
       optimizer:
         callback: OptimizerCallback
@@ -118,17 +134,18 @@ stages:
           clip_value: 5.0
         loss_key: *aggregated_loss
 
-      # scheduler:
-      #   callback: SchedulerCallback
-      #   reduce_metric: *main_metric
+      scheduler:
+        callback: SchedulerCallback
+        reduce_metric: *main_metric
 
       decoder:
         callback: DecoderCallback
         down_ratio: *down_ratio
         max_objs: *max_objs
-      mAP:
-        callback: MeanAPCallback
-        classes: *classes
+
+      # mAP:
+      #  callback: MeanAPCallback
+      #  num_classes: *num_classes
 
       saver:
         callback: CheckpointCallback
