@@ -35,8 +35,10 @@ Project [manifest](https://github.com/catalyst-team/catalyst/blob/master/MANIFES
 
 # Catalyst.Detection [![Build Status](https://travis-ci.com/catalyst-team/detection.svg?branch=master)](https://travis-ci.com/catalyst-team/detection) [![Github contributors](https://img.shields.io/github/contributors/catalyst-team/detection.svg?logo=github&logoColor=white)](https://github.com/catalyst-team/detection/graphs/contributors)
 
+> *Note: this repo uses advanced Catalyst Config API and could be a bit out-of-day right now. 
+> Use [Catalyst's minimal examples section](https://github.com/catalyst-team/catalyst#minimal-examples) for a starting point and up-to-day use cases, please.*
+
 Based on [Objects as points](https://arxiv.org/abs/1904.07850) article by [Xingyi Zhou](https://arxiv.org/search/cs?searchtype=author&query=Zhou%2C+X), [Dequan Wang](https://arxiv.org/search/cs?searchtype=author&query=Wang%2C+D), [Philipp Krähenbühl](https://arxiv.org/search/cs?searchtype=author&query=Kr%C3%A4henb%C3%BChl%2C+P)
-<br/> *Note: this repo could be a bit out-of-day right now. Use [Catalyst's minimal examples section](https://github.com/catalyst-team/catalyst#minimal-examples) for up-to-day use cases, please.*
 
 ### Training in your dataset
 0. Install requirements ```pip install -r requirements.txt```
